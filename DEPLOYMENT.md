@@ -103,13 +103,13 @@ fly deploy
 
 ## GitHub Actions Auto-Deployment
 
-The repository includes GitHub Actions workflows for automatic deployment:
-
 ### For Render
 
-Render automatically deploys on push to main branch if you set it up via Blueprint or enable auto-deploy in the dashboard.
+Render automatically deploys on push to main branch if you set it up via Blueprint or enable auto-deploy in the dashboard. No additional workflow needed!
 
-### For Fly.io
+### For Fly.io (Manual Setup Required)
+
+To enable auto-deployment to Fly.io via GitHub Actions, you'll need to manually create a workflow file:
 
 1. Get your Fly API token:
    ```bash
@@ -120,7 +120,37 @@ Render automatically deploys on push to main branch if you set it up via Bluepri
    - Go to your repository → Settings → Secrets and variables → Actions
    - Add new secret: `FLY_API_TOKEN` = your token
 
-3. The workflow in `.github/workflows/deploy.yml` will automatically deploy on push to main
+3. Create `.github/workflows/deploy-flyio.yml` with this content:
+   ```yaml
+   name: Deploy to Fly.io
+
+   on:
+     push:
+       branches:
+         - main
+     workflow_dispatch:
+
+   jobs:
+     deploy:
+       name: Deploy to Fly.io
+       runs-on: ubuntu-latest
+
+       steps:
+         - name: Checkout code
+           uses: actions/checkout@v4
+
+         - name: Setup Fly CLI
+           uses: superfly/flyctl-actions/setup-flyctl@master
+
+         - name: Deploy to Fly.io
+           run: flyctl deploy --remote-only
+           env:
+             FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+   ```
+
+4. Commit and push the workflow file
+
+**Note**: Due to GitHub App permissions, workflow files cannot be created automatically. You must add this file manually to enable auto-deployment.
 
 ## Local Testing
 
